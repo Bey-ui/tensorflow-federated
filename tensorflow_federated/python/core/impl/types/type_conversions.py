@@ -13,7 +13,9 @@
 """Utilities for type conversion, type checking, type inference, etc."""
 
 import collections
-from collections.abc import Callable, Hashable, Mapping
+from collections.abc import Callable, Hashable, Mapping, Sequence
+import functools
+import operator
 import typing
 from typing import Optional, Union
 
@@ -182,6 +184,113 @@ def tensorflow_infer_type(obj: object) -> Optional[computation_types.Type]:
 
   partial = tree.traverse(_infer_type, obj)
   return infer_type(partial)
+
+
+def to_structure_with_type(
+    obj: object, type_spec: computation_types.Type
+) -> object:
+  """Converts the containers in `obj` to those defined by `type_spec`.
+
+  This function is similar to `tff.types.type_to_py_container`, except it
+  operates on the native Python container that can be represented by the TFF
+  type system instead of on `tff.structure.Struct`.
+
+  Note: This function does not convert any leaf in the structure.
+
+  For example:
+
+  >>> obj = 1
+  >>> type_spec = tff.TensorType(np.int32)
+  >>> tff.types.to_structure_with_type(obj, type_spec)
+  1
+
+  >>> obj = [1, 2, 3]
+  >>> type_spec = tff.StructType([np.int32] * 3)
+  >>> tff.types.to_structure_with_type(obj, type_spec)
+  [1, 2, 3]
+
+  >>> obj = [1, 2, 3]
+  >>> type_spec = tff.StructType([
+  >>>     ('a', np.int32),
+  >>>     ('b', np.int32),
+  >>>     ('c', np.int32),
+  >>> ])
+  >>> tff.types.to_structure_with_type(obj, type_spec)
+  {'a': 1, 'b': 2, 'c': 3}
+
+  Args:
+    obj: A Python value.
+    type_spec: The `tff.Type` to use convert `obj`.
+
+  Returns:
+    A Python value equivalent to `obj` with a structure matching `type_spec`.
+
+  Raises:
+    ValueError: If `obj` and `type_spec` do not match or a container does not
+      have either all named or unnamed elements.
+  """
+  if not tree.is_nested(obj):
+    return obj
+  if not isinstance(type_spec, computation_types.StructType):
+    raise ValueError(
+        'Expected `type_spec` to be a `tff.StructType, found'
+        f' {type(type_spec)}.'
+    )
+
+  def _to_structure(path: tuple[Union[str, int], ...], obj: object) -> object:
+    if tree.is_nested(obj):
+      container_type = functools.reduce(operator.getitem, path, type_spec)
+      if not isinstance(container_type, computation_types.StructType):
+        raise ValueError(
+            'Expected `container_type` to be a `tff.StructType, found'
+            f' {type(container_type)}.'
+        )
+
+      if isinstance(obj, py_typecheck.SupportsNamedTuple):
+        elements = obj._asdict().values()
+      elif isinstance(obj, Mapping):
+        elements = obj.values()
+      elif isinstance(obj, Sequence):
+        elements = obj
+      else:
+        raise ValueError(
+            'Expected `obj` to be a `NamedTuple`, `Mapping`, or `Sequence`,'
+            f' found {type(obj)}.'
+        )
+
+      container_cls = container_type.python_container
+      if container_cls is None:
+        has_names = [
+            name is not None
+            for name, _ in structure.iter_elements(container_type)
+        ]
+        if any(has_names):
+          if not all(has_names):
+            raise ValueError(
+                'Expected `obj` to have either all named or unnamed elements,'
+                f' found {obj}.'
+            )
+          container_cls = dict
+        else:
+          container_cls = list
+
+      if isinstance(container_cls, py_typecheck.SupportsNamedTuple):
+        names = [name for name, _ in structure.iter_elements(container_type)]
+        return container_cls(**dict(zip(names, elements)))
+      elif issubclass(container_cls, Mapping):
+        names = [name for name, _ in structure.iter_elements(container_type)]
+        return container_cls(zip(names, elements))  # pylint: disable=too-many-function-args
+      elif issubclass(container_cls, Sequence):
+        return container_cls(elements)  # pylint: disable=too-many-function-args
+      else:
+        raise ValueError(
+            'Expected `container_cls` to be a `NamedTuple`, `Mapping`, or'
+            f' `Sequence`, found {type(obj)}.'
+        )
+    else:
+      return None
+
+  return tree.traverse_with_path(_to_structure, obj, top_down=False)
 
 
 def _type_to_tf_dtypes_and_shapes(type_spec: computation_types.Type):
