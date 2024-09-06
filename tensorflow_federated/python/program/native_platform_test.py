@@ -478,8 +478,8 @@ class NativeFederatedContextTest(
           _create_identity_tensorflow_computation(
               computation_types.SequenceType(np.int32)
           ),
-          tf.data.Dataset.from_tensor_slices([1, 2, 3]),
-          tf.data.Dataset.from_tensor_slices([1, 2, 3]),
+          [1, 2, 3],
+          [1, 2, 3],
       ),
       (
           'federated_server',

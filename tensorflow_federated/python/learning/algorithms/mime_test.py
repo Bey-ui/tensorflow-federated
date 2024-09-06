@@ -179,11 +179,10 @@ def _create_dataset():
           y=[[0.0], [0.0], [1.0], [1.0]],
       )
   )
-  # Repeat the dataset 2 times with batches of 3 examples, producing 3
-  # minibatches (the last one with only 2 examples).  Note that `batch` is
-  # required for this dataset to be useable, as it adds the batch dimension
-  # which is expected by the model.
-  return dataset.repeat(2).batch(3)
+  # Repeat the dataset 3 times with batches of 3 examples, producing 3
+  # minibatches. Note that `batch` is required for this dataset to be useable,
+  # as it adds the batch dimension which is expected by the model.
+  return dataset.repeat(3).batch(3)
 
 
 class MimeLiteClientWorkExecutionTest(tf.test.TestCase, parameterized.TestCase):
@@ -229,7 +228,7 @@ class MimeLiteClientWorkExecutionTest(tf.test.TestCase, parameterized.TestCase):
     client_model_weights = [_initial_weights()]
     state = process.initialize()
     output = process.next(state, client_model_weights, client_data)
-    self.assertEqual(8, output.measurements['train']['num_examples'])
+    self.assertEqual(6, output.measurements['train']['num_examples'])
 
   @tensorflow_test_utils.skip_test_for_multi_gpu
   def test_custom_metrics_aggregator(self):
@@ -268,7 +267,7 @@ class MimeLiteClientWorkExecutionTest(tf.test.TestCase, parameterized.TestCase):
         process.initialize(), client_model_weights, client_data
     )
     # Train metrics should be multiplied by two by the custom aggregator.
-    self.assertEqual(output.measurements['train']['num_examples'], 16)
+    self.assertEqual(output.measurements['train']['num_examples'], 12)
 
 
 class MimeLiteFunctionalClientWorkExecutionTest(
@@ -318,7 +317,7 @@ class MimeLiteFunctionalClientWorkExecutionTest(
     client_model_weights = [model.initial_weights]
     state = process.initialize()
     output = process.next(state, client_model_weights, client_data)
-    self.assertEqual(8, output.measurements['train']['num_examples'])
+    self.assertEqual(6, output.measurements['train']['num_examples'])
 
   @tensorflow_test_utils.skip_test_for_gpu
   def test_custom_metrics_aggregator(self):
@@ -365,7 +364,7 @@ class MimeLiteFunctionalClientWorkExecutionTest(
         process.initialize(), client_model_weights, client_data
     )
     # Train metrics should be multiplied by two by the custom aggregator.
-    self.assertEqual(output.measurements['train']['num_examples'], 16)
+    self.assertEqual(output.measurements['train']['num_examples'], 12)
 
 
 class MimeLiteTest(tf.test.TestCase, parameterized.TestCase):
@@ -559,7 +558,7 @@ class MimeLiteTest(tf.test.TestCase, parameterized.TestCase):
       output = learning_process.next(state, client_data)
       state = output.state
       metrics = output.metrics
-      self.assertEqual(8, metrics['client_work']['train']['num_examples'])
+      self.assertEqual(6, metrics['client_work']['train']['num_examples'])
 
 
 class ScheduledMimeLiteTest(tf.test.TestCase):

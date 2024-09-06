@@ -13,18 +13,27 @@ See the License for the specific language governing permissions and
 limitations under the License
 ==============================================================================*/
 
-#ifndef THIRD_PARTY_TENSORFLOW_FEDERATED_CC_CORE_IMPL_EXECUTORS_DATASET_CONVERSIONS_H_
-#define THIRD_PARTY_TENSORFLOW_FEDERATED_CC_CORE_IMPL_EXECUTORS_DATASET_CONVERSIONS_H_
+#ifndef THIRD_PARTY_TENSORFLOW_FEDERATED_CC_CORE_IMPL_EXECUTORS_DATASET_UTILS_H_
+#define THIRD_PARTY_TENSORFLOW_FEDERATED_CC_CORE_IMPL_EXECUTORS_DATASET_UTILS_H_
 
 #include <memory>
 
 #include "absl/status/statusor.h"
 #include "tensorflow/core/data/standalone.h"
+#include "tensorflow/core/framework/tensor.h"
+#include "tensorflow_federated/proto/v0/computation.pb.h"
 #include "tensorflow_federated/proto/v0/executor.pb.h"
 
 namespace tensorflow_federated {
-absl::StatusOr<std::unique_ptr<tensorflow::data::standalone::Dataset>>
-SequenceValueToDataset(const v0::Value::Sequence& sequence_pb);
-}
 
-#endif  // THIRD_PARTY_TENSORFLOW_FEDERATED_CC_CORE_IMPL_EXECUTORS_DATASET_CONVERSIONS_H_
+absl::StatusOr<const tensorflow::Tensor> GraphDefTensorFromSequence(
+    const v0::Value::Sequence& sequence_pb);
+
+absl::StatusOr<std::unique_ptr<tensorflow::data::standalone::Dataset>>
+DatasetFromGraphDefTensor(const tensorflow::Tensor& tensor);
+
+absl::StatusOr<std::unique_ptr<tensorflow::data::standalone::Dataset>>
+DatasetFromSequence(const v0::Value::Sequence& sequence_pb);
+}  // namespace tensorflow_federated
+
+#endif  // THIRD_PARTY_TENSORFLOW_FEDERATED_CC_CORE_IMPL_EXECUTORS_DATASET_UTILS_H_

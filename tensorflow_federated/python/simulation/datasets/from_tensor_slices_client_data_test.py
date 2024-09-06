@@ -278,7 +278,6 @@ class TestClientDataTest(tf.test.TestCase, parameterized.TestCase):
       expected_dataset = tf.data.Dataset.from_tensor_slices(
           TEST_DATA[client_id]
       )
-      self.assertIsInstance(tf_dataset, tf.data.Dataset)
       self.assertSameDatasets(expected_dataset, tf_dataset)
 
   def test_dataset_computation_where_client_data_is_tuples(self):
@@ -308,7 +307,6 @@ class TestClientDataTest(tf.test.TestCase, parameterized.TestCase):
       expected_dataset = tf.data.Dataset.from_tensor_slices(
           TEST_DATA_WITH_TUPLES[client_id]
       )
-      self.assertIsInstance(tf_dataset, tf.data.Dataset)
       self.assertSameDatasets(expected_dataset, tf_dataset)
 
   def test_dataset_computation_where_client_data_is_ordered_dicts(self):

@@ -36,6 +36,8 @@ def _to_numpy(value: object) -> object:
       return obj.read_value().numpy()
     elif isinstance(obj, tf.Tensor) and not tf.is_symbolic_tensor(obj):
       return obj.numpy()
+    elif isinstance(obj, tf.data.Dataset):
+      return list(obj.as_numpy_iterator())
     else:
       return None
 

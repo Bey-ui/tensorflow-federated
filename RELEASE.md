@@ -14,6 +14,8 @@ and this project adheres to
 
 ### Changed
 
+*   Update `Value` sequence proto to be represented using `Array` rather than
+    `Datasets`.
 *   Support `None` gradients in `tff.learning.optimizers`. This mimics the
     behavior of `tf.keras.optimizers` - gradients that are `None` will be
     skipped, and their corresponding optimizer output (e.g. momentum and

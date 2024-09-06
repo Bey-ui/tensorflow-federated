@@ -56,7 +56,9 @@ def _iblt_test_data_sampler(
     list of tf.data.Datasets.
   """
   return [
-      tf.data.Dataset.from_tensor_slices(client_data).batch(batch_size)
+      tf.data.Dataset.from_tensor_slices(client_data).batch(
+          batch_size, drop_remainder=True
+      )
       for client_data in data
   ]
 
@@ -577,7 +579,7 @@ class SecAggIbltUniqueCountsTffTest(parameterized.TestCase):
         results, {'hello': (5, 5), 'I am on my way': (4, 4), 'pumpkin': (3, 3)}
     )
 
-  @parameterized.named_parameters(('batch_size_1', 1), ('batch_size_5', 5))
+  @parameterized.named_parameters(('batch_size_5', 5))
   def test_computation_with_k_anonymity(self, batch_size):
     results, _, _ = _execute_computation(
         DATA,

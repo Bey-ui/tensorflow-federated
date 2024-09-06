@@ -43,7 +43,7 @@ def _dataset() -> tf.data.Dataset:
   # producing 3 minibatches (the last one with only 2 examples).
   # Note that `batch` is required for this dataset to be useable,
   # as it adds the batch dimension which is expected by the model.
-  return dataset.repeat(2).batch(3)
+  return dataset.repeat(3).batch(3)
 
 
 def _model_fn() -> model_examples.LinearRegression:

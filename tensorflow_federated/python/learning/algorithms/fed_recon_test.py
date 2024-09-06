@@ -197,7 +197,7 @@ def create_emnist_client_data():
     client_dataset = dataset
     if max_examples is not None:
       client_dataset = client_dataset.take(max_examples)
-    client_dataset = client_dataset.batch(batch_size)
+    client_dataset = client_dataset.batch(batch_size, drop_remainder=True)
     return client_dataset
 
   return client_data
@@ -526,8 +526,8 @@ class TrainingProcessTest(tf.test.TestCase, parameterized.TestCase):
     )
 
     # Only one client has a post-reconstruction batch, with one example.
-    self.assertEqual(metrics['client_work']['train']['num_examples'], 1)
-    self.assertEqual(metrics['client_work']['train']['num_batches'], 1)
+    self.assertEqual(metrics['client_work']['train']['num_examples'], 0)
+    self.assertEqual(metrics['client_work']['train']['num_batches'], 0)
 
     # Ensure we are using a weighted aggregator.
     expected_aggregation_keys = ['mean_weight', 'mean_value']
@@ -576,8 +576,8 @@ class TrainingProcessTest(tf.test.TestCase, parameterized.TestCase):
         metrics['client_work']['train'].keys(), expected_train_keys
     )
 
-    self.assertEqual(metrics['client_work']['train']['num_examples'], 5)
-    self.assertEqual(metrics['client_work']['train']['num_batches'], 3)
+    self.assertEqual(metrics['client_work']['train']['num_examples'], 4)
+    self.assertEqual(metrics['client_work']['train']['num_batches'], 2)
 
     # Ensure we are using a weighted aggregator.
     expected_aggregation_keys = ['mean_weight', 'mean_value']
@@ -703,13 +703,13 @@ class TrainingProcessTest(tf.test.TestCase, parameterized.TestCase):
 
     # Expect 6 reconstruction examples, 6 training examples. Only training
     # included in metrics.
-    self.assertEqual(train_metrics[0]['num_examples'], 6.0)
-    self.assertEqual(train_metrics[1]['num_examples'], 6.0)
+    self.assertEqual(train_metrics[0]['num_examples'], 4.0)
+    self.assertEqual(train_metrics[1]['num_examples'], 4.0)
 
     # Expect 4 reconstruction batches and 4 training batches. Only training
     # included in metrics.
-    self.assertEqual(train_metrics[0]['num_batches'], 4.0)
-    self.assertEqual(train_metrics[1]['num_batches'], 4.0)
+    self.assertEqual(train_metrics[0]['num_batches'], 2.0)
+    self.assertEqual(train_metrics[1]['num_batches'], 2.0)
 
   @parameterized.named_parameters([
       ('keras_opt', _get_keras_optimizer_fn),
@@ -768,13 +768,13 @@ class TrainingProcessTest(tf.test.TestCase, parameterized.TestCase):
 
     # Expect 6 reconstruction examples, 6 training examples. Only training
     # included in metrics.
-    self.assertEqual(train_metrics[0]['num_examples'], 6.0)
-    self.assertEqual(train_metrics[1]['num_examples'], 6.0)
+    self.assertEqual(train_metrics[0]['num_examples'], 4.0)
+    self.assertEqual(train_metrics[1]['num_examples'], 4.0)
 
     # Expect 4 reconstruction batches and 4 training batches. Only training
     # included in metrics.
-    self.assertEqual(train_metrics[0]['num_batches'], 4.0)
-    self.assertEqual(train_metrics[1]['num_batches'], 4.0)
+    self.assertEqual(train_metrics[0]['num_batches'], 2.0)
+    self.assertEqual(train_metrics[1]['num_batches'], 2.0)
 
   def test_custom_model_zeroing_clipping_aggregator_factory(self):
     client_data = create_emnist_client_data()
@@ -833,13 +833,13 @@ class TrainingProcessTest(tf.test.TestCase, parameterized.TestCase):
 
     # Expect 6 reconstruction examples, 6 training examples. Only training
     # included in metrics.
-    self.assertEqual(train_metrics[0]['num_examples'], 6.0)
-    self.assertEqual(train_metrics[1]['num_examples'], 6.0)
+    self.assertEqual(train_metrics[0]['num_examples'], 4.0)
+    self.assertEqual(train_metrics[1]['num_examples'], 4.0)
 
     # Expect 4 reconstruction batches and 4 training batches. Only training
     # included in metrics.
-    self.assertEqual(train_metrics[0]['num_batches'], 4.0)
-    self.assertEqual(train_metrics[1]['num_batches'], 4.0)
+    self.assertEqual(train_metrics[0]['num_batches'], 2.0)
+    self.assertEqual(train_metrics[1]['num_batches'], 2.0)
 
   def test_iterative_process_fails_with_dp_agg_and_client_weight_fn(self):
     def loss_fn():
@@ -976,13 +976,13 @@ class TrainingProcessTest(tf.test.TestCase, parameterized.TestCase):
 
     # Expect 6 reconstruction examples, 6 training examples. Only training
     # included in metrics.
-    self.assertEqual(train_metrics[0]['num_examples'], 6.0)
-    self.assertEqual(train_metrics[1]['num_examples'], 6.0)
+    self.assertEqual(train_metrics[0]['num_examples'], 4.0)
+    self.assertEqual(train_metrics[1]['num_examples'], 4.0)
 
     # Expect 4 reconstruction batches and 4 training batches. Only training
     # included in metrics.
-    self.assertEqual(train_metrics[0]['num_batches'], 4.0)
-    self.assertEqual(train_metrics[1]['num_batches'], 4.0)
+    self.assertEqual(train_metrics[0]['num_batches'], 2.0)
+    self.assertEqual(train_metrics[1]['num_batches'], 2.0)
 
   def test_keras_local_layer_custom_broadcaster(self):
     def loss_fn():
@@ -1115,8 +1115,8 @@ class TrainingProcessTest(tf.test.TestCase, parameterized.TestCase):
         states[1].global_model_weights.trainable,
     )
 
-    self.assertEqual(train_metrics[0]['num_examples'], 10.0)
-    self.assertEqual(train_metrics[1]['num_examples'], 10.0)
+    self.assertEqual(train_metrics[0]['num_examples'], 12.0)
+    self.assertEqual(train_metrics[1]['num_examples'], 12.0)
     self.assertEqual(train_metrics[0]['num_batches'], 6.0)
     self.assertEqual(train_metrics[1]['num_batches'], 6.0)
 
